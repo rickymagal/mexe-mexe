@@ -40,26 +40,43 @@ class JogoCartas:
         # Widget de texto para exibir a mesa
         self.mesa_texto = tk.Text(root)
         self.mesa_texto.pack()
-
+        
     def adicionar_carta(self):
         nova_carta_str = self.entry.get()
         if nova_carta_str.strip():  # Verifica se a string não está vazia ou somente com espaços em branco
-            numero, naipe = nova_carta_str.split()
-            nova_carta = Carta(numero, naipe)
-            self.cartas_na_mesa.append(nova_carta)
-            self.entry.delete(0, tk.END)  # Limpa a entrada
-            self.atualizar_mesa()  # Atualiza a exibição da mesa
+            # Verifica se o formato é uma sequência de 3 ou mais cartas seguidas de um naipe
+            if nova_carta_str[0] == "(" and nova_carta_str[-2] == ")":
+                cartas_naipe = nova_carta_str[1:-2].split()
+                naipes = nova_carta_str[-1]
+                for carta_numero in cartas_naipe:
+                    for naipe in naipes:
+                        nova_carta = Carta(carta_numero, naipe)
+                    self.cartas_na_mesa.append(nova_carta)
+                    # Verifica se o formato é uma carta seguida de 3 ou 4 naipes diferentes
+            else:
+                carta_numero = nova_carta_str[0]
+                naipes = nova_carta_str[1:]
+                for naipe in naipes:
+                    nova_carta = Carta(carta_numero, naipe)
+                    self.cartas_na_mesa.append(nova_carta)
+        self.entry.delete(0, tk.END)  # Limpa a entrada
+        self.atualizar_mesa()  # Atualiza a exibição da mesa
 
     def verificar_carta(self):
         if self.cartas_na_mesa:
             carta_verificar_str = self.entry.get()
-            if carta_verificar_str.strip():  # Verifica se a string não está vazia ou somente com espaços em branco
+            if carta_verificar_str.strip() and len(carta_verificar_str.split()) == 2:
                 numero, naipe = carta_verificar_str.split()
-                carta_verificar = Carta(numero, naipe)
-                if self.verifica_carta_adicionada(self.cartas_na_mesa, carta_verificar):
-                    self.resultado_label.config(text="A carta pode ser adicionada.")
+                if numero.isdigit() or numero in {'J', 'Q', 'K', 'A'}:
+                    carta_verificar = Carta(numero, naipe)
+                    if self.verifica_carta_adicionada(self.cartas_na_mesa, carta_verificar):
+                        self.resultado_label.config(text="A carta pode ser adicionada.")
+                    else:
+                        self.resultado_label.config(text="A carta não pode ser adicionada.")
                 else:
-                    self.resultado_label.config(text="A carta não pode ser adicionada.")
+                    self.resultado_label.config(text="Número de carta inválido.")
+            else:
+                self.resultado_label.config(text="Formato de entrada inválido.")
 
     def resetar_mesa(self):
         self.cartas_na_mesa = []  # Limpa todas as cartas da mesa
@@ -119,8 +136,14 @@ class JogoCartas:
         numero = carta.numero
         if numero.isdigit() or (numero == "10"):
             return int(numero)
-        elif numero in {'J', 'Q', 'K', 'A'}:
-            return 10  # Valor fixo para cartas J, Q, K e A
+        elif numero == 'J':
+            return 11
+        elif numero == 'Q':
+            return 12
+        elif numero == 'K':
+            return 13
+        elif numero == 'A':
+            return 14
         else:
             return 0  # Valor padrão para outros casos
 
