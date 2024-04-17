@@ -34,7 +34,7 @@ class JogoCartas:
                 naipe = carta_verificar_str[-1]
                 if numero.isdigit() or numero in {'J', 'Q', 'K', 'A'}:
                     carta_verificar = Carta(numero, naipe)
-                    if self.verifica_carta_adicionada(self.cartas_na_mesa, carta_verificar):
+                    if self.encontrar_combinacao_valida(carta_verificar):
                         print("A carta pode ser adicionada.")
                     else:
                         print("A carta não pode ser adicionada.")
@@ -42,7 +42,8 @@ class JogoCartas:
                     print("Número de carta inválido.")
             else:
                 print("Formato de entrada inválido.")
-
+        else:
+            print("Não há cartas na mesa.")
 
     def resetar_mesa(self):
         self.cartas_na_mesa = []  # Limpa todas as cartas da mesa
@@ -55,48 +56,40 @@ class JogoCartas:
         for carta in self.cartas_na_mesa:
             print(f"{carta.numero}{carta.naipe}")
 
-    def verifica_carta_adicionada(self, cartas_na_mesa, nova_carta):
-        # Faça uma cópia temporária da mesa de cartas
-        temp_mesa = cartas_na_mesa.copy()
+    def encontrar_combinacao_valida(self, nova_carta):
+        # Adiciona a nova carta temporariamente para verificar se pode formar uma combinação válida
+        self.cartas_na_mesa.append(nova_carta)
 
-        # Adicione a nova carta à cópia temporária
-        temp_mesa.append(nova_carta)
+        # Agrupa as cartas na mesa por número e naipe
+        agrupamentos = {}
+        for carta in self.cartas_na_mesa:
+            chave = (carta.numero, carta.naipe)
+            if chave in agrupamentos:
+                agrupamentos[chave].append(carta)
+            else:
+                agrupamentos[chave] = [carta]
 
-        # Função para encontrar sequências do mesmo naipe
-        def encontra_sequencias_mesmo_naipe(cartas):
-            cartas.sort(key=lambda x: (self.valor_carta(x), x.naipe))
-            valor_anterior = None
-            naipe_anterior = None
-            sequencia = 0
-            for carta in cartas:
-                if valor_anterior is not None and carta.naipe == naipe_anterior:
-                    if self.valor_carta(carta) == self.valor_carta(valor_anterior) + 1:
-                        sequencia += 1
-                        if sequencia >= 2:
-                            return True
-                    else:
-                        sequencia = 0
-                else:
-                    sequencia = 0
-                valor_anterior = carta
-                naipe_anterior = carta.naipe
-            return False
-
-        # Função para encontrar grupos de mesma numeração, mas de naipes diferentes
-        def encontra_grupos_mesma_numeracao(cartas):
-            grupos = {}
-            for carta in cartas:
-                valor = carta.numero
-                if valor in grupos:
-                    grupos[valor].append(carta.naipe)
-                else:
-                    grupos[valor] = [carta.naipe]
-            for naipes in grupos.values():
-                if len(naipes) >= 3:
-                    return True
-            return False
-
-        return encontra_sequencias_mesmo_naipe(temp_mesa) or encontra_grupos_mesma_numeracao(temp_mesa)
+        # Verifica se todas as cartas podem ser agrupadas em grupos válidos
+        for cartas_grupo in agrupamentos.values():
+            if len(cartas_grupo) < 3:
+                continue
+            # Verifica se é uma sequência do mesmo naipe
+            numeros = sorted([self.valor_carta(carta) for carta in cartas_grupo])
+            sequencia = True
+            for i in range(1, len(numeros)):
+                if numeros[i] != numeros[i - 1] + 1:
+                    sequencia = False
+                    break
+            if not sequencia:
+                # Verifica se é uma trinca com naipes diferentes
+                numeros = [self.valor_carta(carta) for carta in cartas_grupo]
+                if len(set(numeros)) != 1:
+                    self.cartas_na_mesa.remove(nova_carta)
+                    return False
+            # Se a opção de mostrar combinações estiver ativada, imprime a primeira combinação válida encontrada
+        # Remove a nova carta adicionada temporariamente
+        self.cartas_na_mesa.remove(nova_carta)
+        return True
 
     def valor_carta(self, carta):
         numero = carta.numero
@@ -112,7 +105,7 @@ class JogoCartas:
             return 14
         else:
             return 0  # Valor padrão para outros casos
-        
+
 if __name__ == "__main__":
     jogo = JogoCartas()
     while True:
@@ -120,7 +113,7 @@ if __name__ == "__main__":
         if comando == "add":
             nova_carta_str = input("Digite a carta a ser adicionada (formato: número naipe): ")
             jogo.adicionar_carta(nova_carta_str)
-        elif comando == "verify":
+        elif comando.startswith("verify"):
             carta_str = input("Digite a carta a ser verificada (formato: número naipe): ")
             jogo.verificar_carta(carta_str)
         elif comando == "reset":
