@@ -61,12 +61,12 @@ class JogoCartas:
                     self.cartas_na_mesa.append(nova_carta)
         self.entry.delete(0, tk.END)  # Limpa a entrada
         self.atualizar_mesa()  # Atualiza a exibição da mesa
-
     def verificar_carta(self):
         if self.cartas_na_mesa:
-            carta_verificar_str = self.entry.get()
-            if carta_verificar_str.strip() and len(carta_verificar_str.split()) == 2:
-                numero, naipe = carta_verificar_str.split()
+            carta_verificar_str = self.entry.get().replace(" ", "")
+            if carta_verificar_str.strip():  # Verifica se a string não está vazia ou somente com espaços em branco
+                numero = carta_verificar_str[:-1]
+                naipe = carta_verificar_str[-1]
                 if numero.isdigit() or numero in {'J', 'Q', 'K', 'A'}:
                     carta_verificar = Carta(numero, naipe)
                     if self.verifica_carta_adicionada(self.cartas_na_mesa, carta_verificar):
@@ -77,6 +77,7 @@ class JogoCartas:
                     self.resultado_label.config(text="Número de carta inválido.")
             else:
                 self.resultado_label.config(text="Formato de entrada inválido.")
+
 
     def resetar_mesa(self):
         self.cartas_na_mesa = []  # Limpa todas as cartas da mesa
