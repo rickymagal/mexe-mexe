@@ -59,36 +59,85 @@ class JogoCartas:
         # Adiciona a nova carta temporariamente para verificar se pode formar uma combinação válida
         self.cartas_na_mesa.append(nova_carta)
 
-        # Ordena as cartas na mesa
+        # Ordena as cartas na mesa por valor
         self.cartas_na_mesa.sort(key=lambda x: self.valor_carta(x))
 
-        # Verifica se todas as cartas podem ser agrupadas em grupos válidos
-        grupos_validos = []
-        grupo_atual = [self.cartas_na_mesa[0]]
-        for i in range(1, len(self.cartas_na_mesa)):
-            if self.valor_carta(self.cartas_na_mesa[i]) == self.valor_carta(self.cartas_na_mesa[i - 1]) + 1 \
-                    and self.cartas_na_mesa[i].naipe == self.cartas_na_mesa[i - 1].naipe:
-                grupo_atual.append(self.cartas_na_mesa[i])
+        # Encontra os grupos de naipes diferentes e as sequências válidas
+        naipes_diferentes_validos = []
+        grupo_atual = []
+
+        for carta in self.cartas_na_mesa:
+            if not grupo_atual:
+                grupo_atual.append(carta)
             else:
-                grupos_validos.append(grupo_atual)
-                grupo_atual = [self.cartas_na_mesa[i]]
+                if carta.numero == grupo_atual[0].numero:
+                    if carta.naipe != grupo_atual[0].naipe:
+                        grupo_atual.append(carta)
+                    else:
+                        if len(set([carta.naipe for carta in grupo_atual])) >= 3:
+                            naipes_diferentes_validos.append(grupo_atual)
+                        grupo_atual = [carta]
+                else:
+                    if len(set([carta.naipe for carta in grupo_atual])) >= 3:
+                        naipes_diferentes_validos.append(grupo_atual)
+                    grupo_atual = [carta]
 
-        grupos_validos.append(grupo_atual)
+        if len(set([carta.naipe for carta in grupo_atual])) >= 3:
+            naipes_diferentes_validos.append(grupo_atual)
 
-        # Remove a nova carta adicionada temporariamente
-        self.cartas_na_mesa.remove(nova_carta)
+        sequencias_validas = []
+        grupo_atual = []
 
-        # Se a opção de mostrar combinações estiver ativada, imprime as combinações válidas encontradas
-        if show_combinacao and grupos_validos:
+        for carta in self.cartas_na_mesa:
+            if not grupo_atual:
+                grupo_atual.append(carta)
+            else:
+                if carta.naipe == grupo_atual[-1].naipe:
+                    if self.valor_carta(carta) == self.valor_carta(grupo_atual[-1]) + 1 \
+                            or (self.valor_carta(carta) == 2 and self.valor_carta(grupo_atual[-1]) == 13) \
+                            or (self.valor_carta(carta) == 14 and self.valor_carta(grupo_atual[-1]) == 2):
+                        grupo_atual.append(carta)
+                    else:
+                        if len(grupo_atual) >= 3:
+                            sequencias_validas.append(grupo_atual)
+                        grupo_atual = [carta]
+                else:
+                    if len(grupo_atual) >= 3:
+                        sequencias_validas.append(grupo_atual)
+                    grupo_atual = [carta]
+
+        if len(grupo_atual) >= 3:
+            sequencias_validas.append(grupo_atual)
+
+        # Verifica se há uma combinação válida
+        combinacao_valida = self.verificar_combinacao_valida(naipes_diferentes_validos, sequencias_validas)
+
+        # Se a flag show_combinacao for verdadeira, imprime uma combinação válida
+        if show_combinacao and combinacao_valida:
             print("Combinação válida encontrada:")
-            for grupo in grupos_validos:
+            for grupo in naipes_diferentes_validos + sequencias_validas:
                 print("Grupo:")
                 for carta in grupo:
                     print(f"{carta.numero}{carta.naipe}")
         elif show_combinacao:
-            print("Não há combinações válidas.")
+            print("Não há combinação válida.")
 
-        return bool(grupos_validos)
+        # Remove a nova carta adicionada temporariamente
+        self.cartas_na_mesa.remove(nova_carta)
+
+        return combinacao_valida
+
+    def verificar_combinacao_valida(self, naipes_diferentes_validos, sequencias_validas):
+        # Verifica se todas as cartas da mesa estão em exatamente um grupo
+        cartas_agrupadas = set()
+        for grupo in naipes_diferentes_validos + sequencias_validas:
+            for carta in grupo:
+                if carta in cartas_agrupadas:
+                    return False
+                cartas_agrupadas.add(carta)
+
+        # Se todas as cartas estiverem em exatamente um grupo, a combinação é válida
+        return True
 
     def valor_carta(self, carta):
         numero = carta.numero
