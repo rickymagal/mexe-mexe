@@ -18,8 +18,12 @@ class JogoCartas:
                         nova_carta = Carta(carta_numero, naipe)
                         self.cartas_na_mesa.append(nova_carta)
             else:
-                carta_numero = nova_carta_str[0]
-                naipes = nova_carta_str[1:]
+                if nova_carta_str[0] == '1':
+                    carta_numero = nova_carta_str[0:2]
+                    naipes = nova_carta_str[2:]
+                else:
+                    carta_numero = nova_carta_str[0]
+                    naipes = nova_carta_str[1:]
                 for naipe in naipes:
                     nova_carta = Carta(carta_numero, naipe)
                     self.cartas_na_mesa.append(nova_carta)
