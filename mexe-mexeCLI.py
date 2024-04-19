@@ -136,7 +136,11 @@ class JogoCartas:
                     return False
                 cartas_agrupadas.add(carta)
 
-        # Se todas as cartas estiverem em exatamente um grupo, a combinação é válida
+        # Verifica se todas as cartas estão presentes na lista de cartas na mesa
+        todas_cartas = set(self.cartas_na_mesa)
+        if cartas_agrupadas != todas_cartas:
+            return False
+
         return True
 
     def valor_carta(self, carta):
@@ -149,8 +153,6 @@ class JogoCartas:
             return 12
         elif numero == 'K':
             return 13
-        elif numero == 'A':
-            return 14
         else:
             return 0  # Valor padrão para outros casos
 
